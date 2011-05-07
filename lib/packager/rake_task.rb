@@ -1,6 +1,5 @@
 require 'rake'
 require 'rake/tasklib'
-require 'bundler/setup'
 require 'erb'
 
 module Packager
@@ -37,9 +36,13 @@ module Packager
 
       yield self if block_given?
 
+      if !@package_name || @package_name.empty?
+        raise "package_name is required"
+      end
+
       @short_package_name ||= package_name.downcase.gsub(/\W+/,'-')
 
-      namespace group
+      namespace group do
         bundle_file_task
         lib_file_task
         bin_file_task
@@ -52,12 +55,15 @@ module Packager
         payload_file_task
         pkg_task
 
+        desc "Package for Mac OS X"
         task :pkg => "#{package_name}.pkg"
+
+        desc "Clean and Package for Mac OS X"
         task :clean => [:rm, :pkg]
       end
 
       desc "Package for Mac OS X"
-      task name => "#{group}/pkg"
+      task name => "#{group}:pkg"
     end
 
     def reverse_domain
@@ -75,7 +81,7 @@ module Packager
     end
 
     def kbytes
-      @total_size / 1024
+      total_size / 1024
     end
 
     private
@@ -83,9 +89,9 @@ module Packager
       # HELPERS
 
       def pkg_dependencies
-        [:make_pkg, "#{package_name}-pkg/Resources", "#{package_name}-pkg/#{package_name}.pkg",
-          "#{package_name}-pkg/Distribution", "#{package_name}-pkg/#{package_name}.pkg/Bom",
-          "#{package_name}-pkg/#{package_name}.pkg/PackageInfo", "#{package_name}-pkg/#{package_name}.pkg/Payload"]
+        [:make_pkg, "#{short_package_name}-pkg/Resources", "#{short_package_name}-pkg/#{short_package_name}.pkg",
+          "#{short_package_name}-pkg/Distribution", "#{short_package_name}-pkg/#{short_package_name}.pkg/Bom",
+          "#{short_package_name}-pkg/#{short_package_name}.pkg/PackageInfo", "#{short_package_name}-pkg/#{short_package_name}.pkg/Payload"]
       end
 
       def get_details
@@ -100,11 +106,33 @@ module Packager
         end
       end
 
+      def setup_bundler
+        require 'bundler/shared_helpers'
+
+        unless Bundler::SharedHelpers.in_bundle?
+          raise "Must be in a Bundler bundle"
+        end
+
+        require 'bundler'
+
+        begin
+          Bundler.setup
+        rescue Bundler::GemNotFound
+          # Do nothing yet, since we don't actually care
+        end
+
+        # Add bundler to the load path after disabling system gems
+        bundler_lib = File.expand_path("../..", __FILE__)
+        $LOAD_PATH.unshift(bundler_lib) unless $LOAD_PATH.include?(bundler_lib)
+      end
+
       # TASK DEFINITIONS
 
       def bundle_file_task
         file "#{package_name}/local/#{short_package_name}/bundle" => "Gemfile" do
           require "rbconfig"
+
+          setup_bundler
 
           unless Config::CONFIG["target_cpu"] == "universal"
             puts "Please use a universal binary copy of ruby"
@@ -168,7 +196,6 @@ module Packager
                            "#{package_name}/local/#{short_package_name}/lib"]
         pkg_tasks += bin_files.map{|b| "#{package_name}/bin/#{b}" }
 
-        desc "Prep the release for PackageMaker"
         task :make_pkg => pkg_tasks
       end
 
@@ -184,8 +211,10 @@ module Packager
       end
 
       def distribution_file_task
+        erb_path = File.expand_path("../build/Distribution.erb", __FILE__)
+
         file "#{short_package_name}-pkg/Distribution" do
-          src = File.read File.expand_path("../build/Distribution.erb", __FILE__)
+          src = File.read erb_path
           erb = ERB.new(src)
 
           File.open("#{short_package_name}-pkg/Distribution", "w") do |file|
@@ -195,8 +224,10 @@ module Packager
       end
 
       def package_info_file_task
+        erb_path = File.expand_path("../build/PackageInfo.erb", __FILE__)
+
         file "#{short_package_name}-pkg/#{short_package_name}.pkg/PackageInfo" do
-          src = File.read File.expand_path("../build/PackageInfo.erb", __FILE__)
+          src = File.read erb_path
           erb = ERB.new(src)
 
           File.open("#{short_package_name}-pkg/#{short_package_name}.pkg/PackageInfo", "w") do |file|
@@ -222,8 +253,6 @@ module Packager
           sh "pkgutil --flatten #{short_package_name}-pkg #{package_name}.pkg"
         end
       end
-
-    end
 
   end
 end
