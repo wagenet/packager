@@ -27,11 +27,14 @@ module Packager
 
     attr_accessor :bin_files
 
+    attr_accessor :resource_files
+
     def initialize(name=:pkg)
       @name = name
       @group = :packager
       @domain = 'gemcutter.org'
       @bin_files = []
+      @resource_files = []
       @package_name, @short_package_name = nil
 
       yield self if block_given?
@@ -45,7 +48,8 @@ module Packager
       namespace group do
         bundle_file_task
         lib_file_task
-        bin_file_task
+        bin_files_task
+        resource_files_task
         make_pkg_task
         rm_task
         directory_tasks
@@ -179,14 +183,30 @@ module Packager
         end
       end
 
-      def bin_file_task
-        for bin_name in bin_files
+      def bin_files_task
+        bin_files.each do |bin_name|
           file "#{package_name}/bin/#{bin_name}" => "bin/#{bin_name}" do
-            binary = File.read("bin/#{bin_name}").sub(/\A#.*/, "#!/usr/local/ruby1.9/bin/ruby -I /usr/local/#{short_package_name}/bundle -r bundler/setup")
+            data = File.read("bin/#{bin_name}").sub(/\A#.*/, "#!/usr/local/ruby1.9/bin/ruby -I /usr/local/#{short_package_name}/bundle -r bundler/setup")
 
             sh "mkdir -p #{package_name}/bin"
-            File.open("#{package_name}/bin/#{bin_name}", "w") { |file| file.puts binary }
+            File.open("#{package_name}/bin/#{bin_name}", "w") { |file| file.puts data }
             File.chmod 0755, "#{package_name}/bin/#{bin_name}"
+          end
+        end
+      end
+
+      def resource_files_task
+        resource_files.each do |resource_name|
+          file "#{package_name}/local/#{short_package_name}/#{resource_name}" => resource_name do
+            destdir = "#{package_name}/local/#{short_package_name}/#{File.dirname(resource_name)}"
+            sh "mkdir -p #{destdir}"
+            sh "cp -R #{resource_name} #{destdir}"
+            target = "#{package_name}/local/#{short_package_name}/#{resource_name}"
+            if File.directory?(target)
+              Dir.glob(target).each{|f| File.chmod 0655 unless File.directory?(f) }
+            else
+              File.chmod 0644, target
+            end
           end
         end
       end
@@ -195,6 +215,7 @@ module Packager
         pkg_tasks = ["#{package_name}/local/#{short_package_name}/bundle",
                            "#{package_name}/local/#{short_package_name}/lib"]
         pkg_tasks += bin_files.map{|b| "#{package_name}/bin/#{b}" }
+        pkg_tasks += resource_files.map{|r| "#{package_name}/local/#{short_package_name}/#{r}" }
 
         task :make_pkg => pkg_tasks
       end
