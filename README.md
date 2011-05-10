@@ -5,9 +5,9 @@ of your gem for Mac OS X and Windows.
 
 ## Requirements
 
-**Windows:** MinGW Ruby install, such as [One-Click RubyInstaller](http://rubyinstaller.org/)
+**Windows:** MinGW Ruby install (such as [One-Click RubyInstaller](http://rubyinstaller.org/)) and [Inno Setup](http://www.jrsoftware.org/isdl.php)
 
-**Mac OS X:** Universal binary version of Ruby. [Learn More](https://github.com/wagenet/packager/wiki/Ruby-Universal-Binary-Installation)
+**Mac OS X:** Universal binary version of Ruby ([Learn More](https://github.com/wagenet/packager/wiki/Ruby-Universal-Binary-Installation)) and possibly the OS X Developer Tools
 
 ## Usage
 
