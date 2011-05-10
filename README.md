@@ -5,8 +5,9 @@ of your gem for Mac OS X and Windows.
 
 ## Requirements
 
-**Windows:** MinGW Ruby install, such as "One-Click RubyInstaller":http://rubyinstaller.org/.
-**Mac OS X:** Universal binary version of Ruby. "Learn More":https://github.com/wagenet/packager/wiki/Ruby-Universal-Binary-Installation
+**Windows:** MinGW Ruby install, such as [One-Click RubyInstaller](http://rubyinstaller.org/)
+
+**Mac OS X:** Universal binary version of Ruby. [Learn More](https://github.com/wagenet/packager/wiki/Ruby-Universal-Binary-Installation)
 
 ## Usage
 
@@ -22,7 +23,7 @@ In your project's Rakefile
 
 ## Known Issues
 
-* Requires a git repo for your project (git ls-files is use internally)
+* Requires a git repo for your project (git ls-files is used internally)
 * Limited configuration
 * No installer styling options
 
