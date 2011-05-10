@@ -1,0 +1,46 @@
+[Setup]
+AppName=<%= package_name %>
+AppVersion=<%= version %>
+DefaultDirName={pf}\<%= package_name %>
+DefaultGroupName=<%= package_name %>
+Compression=lzma2
+SolidCompression=yes
+; For Ruby expansion ~ 32MB (installed) - 12MB (installer)
+ExtraDiskSpaceRequired=20971520
+
+[Files]
+Source: "rubyinstaller.exe"; DestDir: "{tmp}";
+Source: "bin\*.*"; DestDir: "{app}\bin"; Flags: recursesubdirs;
+Source: "local\*.*"; DestDir: "{app}\local"; Flags: recursesubdirs;
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\ruby"
+
+[Registry]
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: "string"; ValueName: "<%= path_constant %>"; \
+  ValueData: "{app}";
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: "expandsz"; ValueName: "Path"; \
+  ValueData: "{olddata};{app}\bin"; Check: NeedsAddPath(ExpandConstant('{app}\bin'))
+
+[Run]
+Filename: "{tmp}\rubyinstaller.exe"; Parameters: "/silent /nocancel /noicons /dir=""{app}/ruby"""; \
+  Flags: shellexec waituntilterminated; StatusMsg: "Installing Ruby";
+
+[Code]
+
+function NeedsAddPath(Param: string): boolean;
+var
+  OrigPath: string;
+begin
+  if not RegQueryStringValue(HKEY_LOCAL_MACHINE,
+    'SYSTEM\CurrentControlSet\Control\Session Manager\Environment',
+    'Path', OrigPath)
+  then begin
+    Result := True;
+    exit;
+  end;
+  // look for the path with leading and trailing semicolon
+  // Pos() returns 0 if not found
+  Result := Pos(';' + Param + ';', ';' + OrigPath + ';') = 0;
+end;
+
