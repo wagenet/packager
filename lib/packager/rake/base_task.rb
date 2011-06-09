@@ -98,12 +98,17 @@ module Packager
           file "#{package_name}/local/#{short_package_name}/lib"
 
           `git ls-files -- lib`.split("\n").each do |file|
-            dest = "#{package_name}/local/#{short_package_name}/#{file}"
-            file dest => file do
-              verbose(false) { mkdir_p File.dirname(dest) }
-              cp_r file, dest
+            # submodules show up as a single file
+            files = File.directory?(file) ? Dir["#{file}/**/*"] : [file]
+
+            files.each do |f|
+              dest = "#{package_name}/local/#{short_package_name}/#{f}"
+              file dest => f do
+                verbose(false) { mkdir_p File.dirname(dest) }
+                cp_r f, dest
+              end
+              task "#{package_name}/local/#{short_package_name}/lib" => dest
             end
-            task "#{package_name}/local/#{short_package_name}/lib" => dest
           end
         end
 
