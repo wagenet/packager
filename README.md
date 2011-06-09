@@ -26,6 +26,8 @@ In your project's Rakefile
 * Requires a git repo for your project (git ls-files is used internally)
 * Limited configuration
 * No installer styling options
+* When uninstalling from Windows Ruby Uninstaller isn't run properly,
+  though this shouldn't actually cause any problems.
 
 ## Credits
 
