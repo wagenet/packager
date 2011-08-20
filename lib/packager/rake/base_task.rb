@@ -74,13 +74,18 @@ module Packager
 
             puts "Regenerating the bundle."
 
-            rm_rf "bundle"
-            rm_rf ".bundle"
             rm_rf "#{short_package_name}-pkg"
+            rm_rf package_name
             rm "#{package_name}.pkg", :force => true
-            Bundler.with_clean_env do
-              sh "bundle --standalone --without development"
+            rm_rf ".bundle"
+
+            unless ENV['PREBUNDLED']
+              rm_rf "bundle"
+              Bundler.with_clean_env do
+                sh 'bundle --standalone --without development'
+              end
             end
+
             mkdir_p "#{package_name}/local/#{short_package_name}"
             cp_r "bundle", "#{package_name}/local/#{short_package_name}/"
 
