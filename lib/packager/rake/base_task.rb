@@ -107,6 +107,15 @@ module Packager
             mkdir_p "#{package_name}/local/#{short_package_name}"
             mv "bundle", "#{package_name}/local/#{short_package_name}/"
 
+            # Inject packager enviroment information
+            setup_path = "#{package_name}/local/#{short_package_name}/bundle/bundler/setup.rb"
+            setup_data = File.read(setup_path)
+            File.open(setup_path, 'w') do |file|
+              # Programs can use this env var to know if they are running in the package or not
+              file.puts "ENV['RUBY_PACKAGER'] = '#{Packager::VERSION}'"
+              file.puts setup_data
+            end
+
             verbose(false) do
               Dir.chdir("#{package_name}/local/#{short_package_name}/bundle/ruby/1.9.1") do
                 Dir["{bin,cache,doc,specifications}"].each { |f| rm_rf f }
