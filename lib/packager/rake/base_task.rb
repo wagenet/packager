@@ -3,6 +3,7 @@ require 'rake/tasklib'
 require 'erb'
 require 'rbconfig'
 require 'packager'
+require 'packager/version'
 
 module Packager
   module Rake
