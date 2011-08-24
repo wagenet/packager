@@ -77,17 +77,35 @@ module Packager
             rm_rf "#{short_package_name}-pkg"
             rm_rf package_name
             rm "#{package_name}.pkg", :force => true
-            rm_rf ".bundle"
 
-            unless ENV['PREBUNDLED']
+            begin
+              # :force => true doesn't seem to work
+              mv ".bundle", ".bundle.bak" rescue nil
               rm_rf "bundle"
               Bundler.with_clean_env do
-                sh 'bundle --standalone --without development'
+                # MEGAHAX!!!!
+                # When bundler is run from within a shell out, it calls Bundler.setup
+                # too early. This means that the GEM_HOME gets set incorrectly and the
+                # standalone bundle is not built properly
+                original_rubyopt = ENV['RUBYOPT']
+                begin
+                  ENV['RUBYOPT'] = original_rubyopt.sub("-rbundler/setup", '')
+                  sh 'bundle --standalone --without development'
+                ensure
+                  ENV['RUBYOPT'] = original_rubyopt
+                end
               end
+            rescue Exception => e
+              puts e.class
+              raise e
+            ensure
+              rm_rf ".bundle"
+              # :force => true doesn't seem to work
+              mv ".bundle.bak", ".bundle" rescue nil
             end
 
             mkdir_p "#{package_name}/local/#{short_package_name}"
-            cp_r "bundle", "#{package_name}/local/#{short_package_name}/"
+            mv "bundle", "#{package_name}/local/#{short_package_name}/"
 
             verbose(false) do
               Dir.chdir("#{package_name}/local/#{short_package_name}/bundle/ruby/1.9.1") do
