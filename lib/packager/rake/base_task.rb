@@ -89,11 +89,17 @@ module Packager
                 # too early. This means that the GEM_HOME gets set incorrectly and the
                 # standalone bundle is not built properly
                 original_rubyopt = ENV['RUBYOPT']
+
+                # Empty PKG_CONFIG_LIBDIR so if we have MacPorts, those libs aren't used
+                original_pkg_config_libdir = ENV['PKG_CONFIG_LIBDIR']
+
                 begin
-                  ENV['RUBYOPT'] = original_rubyopt.sub("-rbundler/setup", '')
+                  ENV['RUBYOPT'] = original_rubyopt.sub("-rbundler/setup", '') if original_rubyopt
+                  ENV['PKG_CONFIG_LIBDIR'] = ''
                   sh 'bundle --standalone --without development'
                 ensure
                   ENV['RUBYOPT'] = original_rubyopt
+                  ENV['PKG_CONFIG_LIBDIR'] = original_pkg_config_libdir
                 end
               end
             rescue Exception => e
