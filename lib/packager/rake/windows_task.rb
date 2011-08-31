@@ -22,7 +22,6 @@ module Packager
         create_bin_file_aliases_task
         create_resource_files_task
         create_make_pkg_task
-        create_rm_task
 
         create_ruby_download_task
         create_iss_task
@@ -111,6 +110,11 @@ END
             puts "Compiling. This may take a while..."
             sh %{"#{inno_dir}Compil32.exe" /cc "#{package_name}\\packager.iss"}
             mv "#{package_name}/Output/setup.exe", "#{package_name}.exe"
+
+            unless ENV['NOCLEAN']
+              # Cleanup
+              rm_rf package_name
+            end
           end
         end
 

@@ -17,7 +17,6 @@ module Packager
         create_bin_files_task
         create_resource_files_task
         create_make_pkg_task
-        create_rm_task
         create_directory_tasks
         create_distribution_file_task
         create_package_info_file_task
@@ -122,6 +121,12 @@ module Packager
 
           file "#{package_name}.pkg" => pkg_dependencies do
             sh "pkgutil --flatten #{short_package_name}-pkg #{package_name}.pkg"
+
+            unless ENV['NOCLEAN']
+              # Cleanup
+              rm_rf package_name
+              rm_rf "#{short_package_name}-pkg"
+            end
           end
         end
     end

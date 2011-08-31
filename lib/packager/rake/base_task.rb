@@ -191,13 +191,6 @@ module Packager
           task :make_pkg => make_pkg_tasks
         end
 
-        def create_rm_task
-          # TODO: Remove more fully
-          task :rm do
-            rm_rf package_name
-          end
-        end
-
     end
   end
 end
