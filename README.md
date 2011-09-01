@@ -13,6 +13,7 @@ of your gem for Mac OS X and Windows.
 
 In your project's Rakefile
 
+    require 'packager/rake_task'
     Packager::RakeTask.new(:pkg) do |t|
       t.package_name = "My Project"
       t.version = "1.0.0"
